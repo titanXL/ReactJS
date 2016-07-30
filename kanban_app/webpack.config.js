@@ -22,6 +22,8 @@ const common = {
         filename: 'bundle.js'
     },
     module: {
+        
+      
         loaders: [{
             // Test expects a RegExp! Note the slashes!
             test: /\.css$/,
@@ -39,13 +41,15 @@ const common = {
                 // Parse only app files! Without this it will go through entire project.
                 // In addition to being slow, that will most likely result in an error.
                 include: PATHS.app
-            }]
+            }
+        ]
     }
 };
 
 if (TARGET === 'start' || !TARGET) {
     module.exports = merge(common, {
         devtool: 'eval-source-map',
+        
         devServer: {
             contentBase: PATHS.build,// Enable history API fallback so HTML5 History API based
             // routing works. This is a good default that will come
@@ -78,5 +82,9 @@ if (TARGET === 'start' || !TARGET) {
 
 }
 if (TARGET === 'build') {
-    module.exports = merge(common, {})
+    module.exports = merge(common, {
+        output:{
+            publicPath : 'https://github.com/titanXL/kanbanApp'
+        }
+    })
 }

@@ -1,12 +1,15 @@
 {
-    "presets":[
+    "plugins": [
+        "transform-object-rest-spread"
+    ],
+    "presets": [
         "es2015",
         "react",
         "survivejs-kanban"
     ],
-    "env":{
-        "start":{
-            "presets":[
+    "env": {
+        "start": {
+            "presets": [
                 "react-hmre"
             ]
         }
