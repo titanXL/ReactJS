@@ -2,7 +2,7 @@
   "compilerOptions": {
     "experimentalDecorators": true,
     "target": "ES6",
-    "module": "sommons"
+    "module": "commonjs"
 
   },
   "exclude": [
