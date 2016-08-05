@@ -3,27 +3,33 @@ const merge = require('webpack-merge');
 const webpack = require('webpack');
 const NpmInstallPlugin = require('npm-install-webpack-plugin');
 const TARGET = process.env.npm_lifecycle_event;
+const pkg = require('./package.json');
+const HtmlWebpackPlugin = require('html-webpack-plugin');
+
 const PATHS = {
     app: path.join(__dirname, 'app'),
-    build: path.join(__dirname, 'build')
+    build: path.join(__dirname, 'build'),
+    style: path.join(__dirname,'app/main.css'),
+    test : path.join(__dirname,'tests')
 };
 
 process.env.BABEL_ENV = TARGET;
 
 const common = {
     entry: {
-        app: PATHS.app
+        app: PATHS.app,
+        style : PATHS.style
     },
     resolve: {
         extensions: ['', '.js', '.jsx']
     },
     output: {
         path: PATHS.build,
-        filename: 'bundle.js'
+        filename: '[name].js'
     },
     module: {
-        
-      
+
+
         loaders: [{
             // Test expects a RegExp! Note the slashes!
             test: /\.css$/,
@@ -48,10 +54,13 @@ const common = {
 
 if (TARGET === 'start' || !TARGET) {
     module.exports = merge(common, {
+        entry:{
+            style : PATHS.style
+        },
         devtool: 'eval-source-map',
-        
+
         devServer: {
-            contentBase: PATHS.build,// Enable history API fallback so HTML5 History API based
+            // Enable history API fallback so HTML5 History API based
             // routing works. This is a good default that will come
             // in handy in more complicated setups.
             historyApiFallback: true,
@@ -83,8 +92,76 @@ if (TARGET === 'start' || !TARGET) {
 }
 if (TARGET === 'build') {
     module.exports = merge(common, {
-        output:{
-            publicPath : 'https://github.com/titanXL/kanbanApp'
-        }
+        // Define vendor entry point needed for splitting
+    entry: {
+      vendor: Object.keys(pkg.dependencies).filter(function(v) {
+        // Exclude alt-utils as it won't work with this setup
+        // due to the way the package has been designed
+        // (no package.json main).
+        return v !== 'alt-utils';
+      }),
+      style : PATHS.style
+    },output: {
+            path: PATHS.build,
+            filename:'[name].[chunkhash].js',
+            chunkFilename:'[chunkhash].js',
+            publicPath: 'https://github.com/titanXL/reactJS'
+        },
+        // Setting DefinePlugin affects React library size!
+        // DefinePlugin replaces content "as is" so we need some extra quotes
+        // for the generated code to make sense
+        plugins: [
+            new HtmlWebpackPlugin({
+      template: 'node_modules/html-webpack-template/index.ejs',
+      title: 'Kanban app',
+      appMountId: 'app',
+      inject: false
+    }),
+            new webpack.optimize.CommonsChunkPlugin({
+                names:['vendor','manifest']
+            }),
+            // Setting DefinePlugin affects React library size!
+            // DefinePlugin replaces content "as is" so we need some extra quotes
+            // for the generated code to make sense
+            new webpack.DefinePlugin({
+                'process.env.NODE_ENV': '"production"'
+
+                // You can set this to JSON.stringify('development') for your
+                // development target to force NODE_ENV to development mode
+                // no matter what
+            }),
+            new webpack.optimize.UglifyJsPlugin({
+                compress: {
+                    warnings: false
+                }
+            })
+        ],
+        
     })
+}
+if(TARGET === 'test' || TARGET === 'tdd') {
+  module.exports = merge(common, {
+    devtool: 'inline-source-map',
+    resolve: {
+      alias: {
+        'app': PATHS.app
+      }
+    },
+    module: {
+      preLoaders: [
+        {
+          test: /\.jsx?$/,
+          loaders: ['isparta-instrumenter'],
+          include: PATHS.app
+        }
+      ],
+      loaders: [
+        {
+          test: /\.jsx?$/,
+          loaders: ['babel?cacheDirectory'],
+          include: PATHS.test
+        }
+      ]
+    }
+  });
 }
