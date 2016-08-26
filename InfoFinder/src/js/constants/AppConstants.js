@@ -1,0 +1,4 @@
+module.exports = {
+    SEARCH_TEXT: 'SEARCH_TEXT',
+    RECIEVE_RESULTS : 'RECIEVE_RESULTS'
+}
